@@ -1,0 +1,85 @@
+@startuml
+!theme plain
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+
+title 密码管理 CRUD 流程
+
+|用户|
+start
+:进入仪表盘;
+:浏览密码列表\n(可选: 分类筛选 + 搜索);
+
+|系统|
+:查询 SQLite\n(WHERE category + LIKE);
+:返回条目列表\n(不包含密码明文);
+
+repeat
+  |用户|
+  switch (操作?)
+  case (添加密码)
+    :点击「添加密码」;
+    :填写网站/用户名/密码/分类;
+    :点击「保存」;
+    |系统|
+    :验证必填字段;
+    :check_password_strength()\n计算强度评分 (0-5);
+    :encrypt(cipher, password)\nFernet 加密;
+    :INSERT INTO entries\n(website, username, encrypted_pwd, ...);
+    :Flash 消息: 已添加;
+
+  case (查看密码)
+    :点击 👁 图标;
+    |系统|
+    :GET /api/entry/:id/password;
+    :验证 Session;
+    :SELECT encrypted_password\nFROM entries WHERE id=?;
+    :decrypt(cipher, ciphertext)\nFernet 解密;
+    :return JSON {password: plaintext};
+    |用户|
+    :密码内联显示在页面上;
+    :再次点击 👁 隐藏;
+
+  case (复制密码)
+    :点击 📋 图标;
+    |系统|
+    :GET /api/entry/:id/password;
+    :解密返回密码明文;
+    |用户|
+    :navigator.clipboard.writeText();
+    |系统|
+    :启动 30 秒定时器;
+    :30 秒后 clipboard_clear();
+
+  case (编辑密码)
+    :点击 ✏ 图标;
+    :修改密码字段;
+    :点击「保存」;
+    |系统|
+    if (新密码 != 旧密码?) then (是)
+      :INSERT INTO password_history\n(entry_id, old_encrypted_pwd);
+    endif
+    :encrypt(cipher, new_password);
+    :UPDATE entries SET ...\nWHERE id=?;
+    :Flash 消息: 已更新;
+
+  case (删除密码)
+    :点击 🗑 图标;
+    :确认删除对话框;
+    |系统|
+    :DELETE FROM entries\nWHERE id=?;
+    :CASCADE DELETE\npassword_history;
+
+  case (搜索/筛选)
+    :输入搜索词 / 选择分类;
+    |系统|
+    :防抖 250ms;
+    :SELECT WHERE website LIKE ?\nOR username LIKE ?\nAND category = ?;
+
+  endswitch
+
+  |系统|
+  :刷新列表;
+repeat while (用户是否继续操作?) is (是)
+stop
+@enduml

@@ -1,0 +1,58 @@
+/* 密码管理器 v2 - 自定义样式 */
+
+body {
+    background-color: #f5f6fa;
+    font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", sans-serif;
+}
+
+/* 导航栏 */
+.navbar-brand { font-size: 1.3rem; letter-spacing: 0.5px; }
+
+/* 卡片 */
+.card { border-radius: 12px; }
+
+/* 表格 */
+.table th { font-weight: 600; border-bottom-width: 2px; }
+.table td { vertical-align: middle; }
+.table-hover tbody tr:hover { background-color: #f0f4ff; }
+
+/* 按钮组 */
+.btn-group-sm > .btn { border-radius: 6px; margin: 0 1px; }
+
+/* 表单 */
+.form-control:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+/* 分类侧边栏 */
+.list-group-item.active {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+/* 密码年龄 badge */
+.badge { font-weight: 500; }
+
+/* 会话倒计时 */
+#lockTimer { font-family: monospace; }
+
+/* details/summary 样式 */
+details > summary {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Toast */
+.toast { opacity: 1 !important; }
+
+/* 空状态图标 */
+.bi-inbox { opacity: 0.3; }
+
+/* 审计页面进度条 */
+.progress { border-radius: 10px; }
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .btn-group-sm .btn { padding: 0.25rem 0.4rem; font-size: 0.75rem; }
+}
