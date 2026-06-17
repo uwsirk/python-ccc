@@ -1,0 +1,63 @@
+@startuml
+!theme plain
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+
+title 用户认证流程 (Login / Register Flow)
+
+|用户|
+start
+:打开密码管理器;
+
+|系统|
+if (是否首次运行?) then (是)
+  :显示注册页面;
+  :用户输入主密码 + 确认;
+  if (密码 >= 6位\n且两次一致?) then (是)
+    :生成随机盐值 (os.urandom 16B);
+    :PBKDF2 派生密钥\n(480,000 次 SHA256 迭代);
+    :Fernet 加密验证令牌\n"MASTER_PASSWORD_VERIFICATION";
+    :存储 salt + token 到 SQLite;
+    :设置 Session\n(authenticated=True);
+    :跳转仪表盘;
+  else (否)
+    :显示错误提示;
+    stop
+  endif
+else (否)
+  :显示登录页面;
+  :用户输入主密码;
+  :从数据库加载 salt + token;
+  :PBKDF2 派生密钥;
+  :Fernet 解密验证令牌;
+  if (解密结果 ==\n"MASTER_PASSWORD_VERIFICATION"?) then (是)
+    :设置 Session\n(last_activity=now);
+    :跳转仪表盘;
+  else (否)
+    if (尝试次数 < 3?) then (是)
+      :显示「主密码错误」;
+      :尝试次数 +1;
+      detach
+    else (否)
+      :退出程序;
+      stop
+    endif
+  endif
+endif
+
+|用户|
+:使用密码管理器;
+
+|系统|
+:before_request 中间件\n检查 last_activity;
+if (距上次操作 > 10分钟?) then (是)
+  :清除 Session;
+  :重定向到登录页\n提示「已自动锁定」;
+  stop
+else (否)
+  :更新 last_activity;
+  :继续处理请求;
+endif
+
+stop
+@enduml

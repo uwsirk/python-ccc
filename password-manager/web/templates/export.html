@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}导入导出 - 密码管理器{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="mb-4"><i class="bi bi-box-arrow-up"></i> 导入 / 导出</h3>
+
+    <div class="row g-4">
+        <!-- 导出 CSV -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5><i class="bi bi-filetype-csv"></i> 导出 CSV（明文）</h5>
+                    <p class="text-muted small">导出为 Excel 可打开的 CSV 文件，<strong class="text-danger">密码将以明文存储</strong>，请妥善保管导出文件。</p>
+                    <ul class="small text-muted">
+                        <li>可用于迁移到其他密码管理器</li>
+                        <li>可用 Excel / WPS 打开查看</li>
+                        <li>⚠️ 注意：文件包含所有密码明文</li>
+                    </ul>
+                    <a href="{{ url_for('export_csv') }}" class="btn btn-warning">
+                        <i class="bi bi-download"></i> 导出 CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导出加密备份 -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5><i class="bi bi-shield-lock"></i> 导出加密备份（JSON）</h5>
+                    <p class="text-muted small">密码保持<strong class="text-success">加密状态</strong>导出，只能在相同主密码的本系统中恢复。</p>
+                    <ul class="small text-muted">
+                        <li>密码保持 AES-128 加密</li>
+                        <li>适用于备份和迁移</li>
+                        <li>✅ 安全，即使文件泄露也无妨</li>
+                    </ul>
+                    <a href="{{ url_for('export_encrypted') }}" class="btn btn-success">
+                        <i class="bi bi-download"></i> 导出加密备份
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导入 CSV -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5><i class="bi bi-upload"></i> 从 CSV 导入</h5>
+                    <p class="text-muted small">从其他密码管理器导出的 CSV 文件导入。文件需包含列：网站, 用户名, 密码, 备注, 分类。</p>
+                    <form method="POST" action="{{ url_for('import_csv') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <input type="file" class="form-control" name="file" accept=".csv" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload"></i> 导入
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- CSV 格式说明 -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <h5><i class="bi bi-info-circle"></i> CSV 格式说明</h5>
+                    <p class="small text-muted mb-2">CSV 文件需包含以下列（第一行为表头）：</p>
+                    <code class="small d-block p-2 bg-white rounded">
+                        网站/应用,用户名,密码,备注,分类<br>
+                        Google,example@gmail.com,mypassword,主邮箱,邮箱<br>
+                        GitHub,myuser,anotherpwd,开发用,工作
+                    </code>
+                    <p class="small text-muted mt-2 mb-0">💡 分类可选值：社交、邮箱、金融、购物、工作、学习、娱乐、其他</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 返回仪表盘
+        </a>
+    </div>
+</div>
+{% endblock %}

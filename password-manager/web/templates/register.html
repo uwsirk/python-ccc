@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}设置主密码 - 密码管理器{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-5 col-lg-4">
+            <div class="text-center mb-4">
+                <h1 class="fw-bold text-primary">🔐 密码管理器</h1>
+                <p class="text-muted">首次使用，请设置主密码</p>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="alert alert-warning small mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>重要：</strong>主密码是解密所有数据的唯一凭证，<br>遗忘后<u>无法找回</u>，请务必牢记！
+                    </div>
+
+                    <form method="POST" action="{{ url_for('register') }}">
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold">主密码</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control form-control-lg"
+                                       id="password" name="password"
+                                       placeholder="至少6个字符"
+                                       autofocus required
+                                       oninput="checkStrength()">
+                                <button class="btn btn-outline-secondary" type="button"
+                                        onclick="toggleVisibility('password', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <!-- 密码强度指示器 -->
+                            <div class="mt-1" id="strength-indicator"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirm" class="form-label fw-semibold">确认主密码</label>
+                            <input type="password" class="form-control form-control-lg"
+                                   id="confirm" name="confirm"
+                                   placeholder="再次输入主密码"
+                                   required
+                                   oninput="checkMatch()">
+                            <div class="mt-1" id="match-indicator"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100" id="submitBtn">
+                            <i class="bi bi-check-circle"></i> 设置主密码
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const STRENGTH_LABELS = {0: '非常弱', 1: '弱', 2: '一般', 3: '强', 4: '非常强', 5: '极强'};
+const STRENGTH_COLORS = {0: '#dc3545', 1: '#fd7e14', 2: '#ffc107', 3: '#20c997', 4: '#198754', 5: '#198754'};
+
+function toggleVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+function checkStrength() {
+    const pwd = document.getElementById('password').value;
+    const div = document.getElementById('strength-indicator');
+    if (!pwd) { div.innerHTML = ''; return; }
+
+    fetch(`/api/check-strength?password=${encodeURIComponent(pwd)}`)
+        .then(r => r.json())
+        .then(data => {
+            const bars = ['○○○○○', '●○○○○', '●●○○○', '●●●○○', '●●●●○', '●●●●●'];
+            div.innerHTML = `<small style="color:${STRENGTH_COLORS[data.strength]}">
+                ${bars[data.strength]} ${data.strength_label}
+            </small>`;
+        });
+}
+
+function checkMatch() {
+    const pwd = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm').value;
+    const div = document.getElementById('match-indicator');
+    if (!confirm) { div.innerHTML = ''; return; }
+    if (pwd === confirm) {
+        div.innerHTML = '<small class="text-success">✅ 密码一致</small>';
+    } else {
+        div.innerHTML = '<small class="text-danger">❌ 密码不一致</small>';
+    }
+}
+</script>
+{% endblock %}

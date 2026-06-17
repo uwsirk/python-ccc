@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}登录 - 密码管理器{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-5 col-lg-4">
+            <div class="text-center mb-4">
+                <h1 class="fw-bold text-primary">🔐 密码管理器</h1>
+                <p class="text-muted">请输入主密码以解锁</p>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('login') }}">
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold">
+                                <i class="bi bi-lock-fill"></i> 主密码
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control form-control-lg"
+                                       id="password" name="password"
+                                       placeholder="请输入主密码"
+                                       autofocus required>
+                                <button class="btn btn-outline-secondary" type="button"
+                                        onclick="toggleVisibility('password', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-unlock-fill"></i> 解锁
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <p class="text-center text-muted mt-3 small">
+                <i class="bi bi-shield-lock"></i>
+                数据使用 AES-128 加密保护
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+</script>
+{% endblock %}

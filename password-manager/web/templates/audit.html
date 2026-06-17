@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}安全审计 - 密码管理器{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- 安全评分 -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 text-center">
+                <div class="card-body py-4">
+                    <h6 class="text-muted mb-2">🔐 安全评分</h6>
+                    <div class="display-4 fw-bold text-{{ score_color }}">
+                        {{ security_score }}<small class="fs-5">/100</small>
+                    </div>
+                    <div class="progress mt-2" style="height:8px">
+                        <div class="progress-bar bg-{{ score_color }}" style="width:{{ security_score }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">📊 审计摘要</h5>
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="fs-4 fw-bold">{{ total_entries }}</div>
+                            <small class="text-muted">总条目</small>
+                        </div>
+                        <div class="col">
+                            <div class="fs-4 fw-bold text-danger">{{ weak_passwords|length }}</div>
+                            <small class="text-muted">弱密码</small>
+                        </div>
+                        <div class="col">
+                            <div class="fs-4 fw-bold text-warning">{{ reused_passwords|length }}</div>
+                            <small class="text-muted">重复密码</small>
+                        </div>
+                        <div class="col">
+                            <div class="fs-4 fw-bold text-info">{{ old_passwords|length }}</div>
+                            <small class="text-muted">过期密码</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if total_entries == 0 %}
+    <div class="text-center py-5">
+        <i class="bi bi-shield-check display-1 text-muted"></i>
+        <h4 class="text-muted mt-3">暂无密码记录，无需审计</h4>
+        <a href="{{ url_for('add_entry') }}" class="btn btn-primary mt-2">添加密码</a>
+    </div>
+    {% else %}
+
+    <!-- 弱密码列表 -->
+    {% if weak_passwords %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> ⚠️ 弱密码 ({{ weak_passwords|length }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>网站</th><th>用户名</th><th>长度</th><th>强度评分</th><th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in weak_passwords %}
+                    <tr>
+                        <td><strong>{{ item.website }}</strong></td>
+                        <td>{{ item.username }}</td>
+                        <td>{{ item.length }} 位</td>
+                        <td>
+                            <span class="badge bg-danger">{{ item.score }}/5</span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('edit_entry', entry_id=item.id) }}"
+                               class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i> 修改密码
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 重复密码列表 -->
+    {% if reused_passwords %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-copy"></i> 🔄 重复密码 ({{ reused_passwords|length }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>网站</th><th>用户名</th><th>与以下网站相同</th><th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in reused_passwords %}
+                    <tr>
+                        <td><strong>{{ item.website }}</strong></td>
+                        <td>{{ item.username }}</td>
+                        <td>
+                            {% if item.shared_with %}
+                            <span class="badge bg-warning text-dark">{{ item.shared_with }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('edit_entry', entry_id=item.id) }}"
+                               class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i> 更换密码
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 过期密码列表 -->
+    {% if old_passwords %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-clock-history"></i> ⏰ 过期密码 ({{ old_passwords|length }})</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>网站</th><th>用户名</th><th>未更新天数</th><th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in old_passwords %}
+                    <tr>
+                        <td><strong>{{ item.website }}</strong></td>
+                        <td>{{ item.username }}</td>
+                        <td>
+                            <span class="badge bg-info">{{ item.age_days }} 天</span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('edit_entry', entry_id=item.id) }}"
+                               class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-arrow-repeat"></i> 更新密码
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not weak_passwords and not reused_passwords and not old_passwords %}
+    <div class="text-center py-5">
+        <i class="bi bi-trophy display-1 text-success"></i>
+        <h3 class="text-success mt-3">🎉 所有密码安全健康！</h3>
+        <p class="text-muted">没有发现弱密码、重复密码或过期密码</p>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}

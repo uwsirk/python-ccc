@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+
+title 密码管理器 - 系统架构图
+
+package "界面层 (Presentation)" {
+  [tkinter 桌面版] as gui
+  [Flask + Bootstrap 5\nWeb 版] as web
+}
+
+package "业务逻辑层 (Business Logic)" {
+  [认证管理\n注册/登录/锁定] as auth
+  [密码 CRUD\n增删改查/搜索/分类] as crud
+  [安全审计\n弱密码/重复/过期检测] as audit
+  [数据维护\n导入/导出/密码历史] as maint
+}
+
+package "数据层 (Data)" {
+  [crypto_utils.py\n加密/解密/密钥派生] as crypto
+  [database.py\nSQLite CRUD/迁移/统计] as db
+}
+
+package "存储层 (Storage)" {
+  database "SQLite\npasswords.db" as sqlite
+  storage "Flask Session\n(服务端 Cookie)" as session
+}
+
+gui -down-> auth
+gui -down-> crud
+web -down-> auth
+web -down-> crud
+web -down-> audit
+web -down-> maint
+
+auth -down-> crypto
+crud -down-> crypto
+audit -down-> crypto
+maint -down-> crypto
+
+auth -down-> db
+crud -down-> db
+audit -down-> db
+maint -down-> db
+
+crypto -down-> sqlite
+db -down-> sqlite
+auth -down-> session
+
+note right of crypto
+  PBKDF2-SHA256 密钥派生
+  Fernet AES-128-CBC 加解密
+  随机密码生成 / 强度检测
+end note
+
+note right of db
+  自动 Schema 迁移
+  WAL 模式 / 外键约束
+  分类统计 / 历史管理
+end note
+
+@enduml

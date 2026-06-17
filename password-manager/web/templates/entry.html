@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑密码' if entry else '添加密码' }} - 密码管理器{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-6 col-lg-5">
+            <h3 class="mb-3">
+                {% if entry %}
+                <i class="bi bi-pencil-square"></i> 编辑密码
+                {% else %}
+                <i class="bi bi-plus-circle"></i> 添加密码
+                {% endif %}
+            </h3>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form method="POST" id="entryForm">
+                        <!-- 网站/应用 -->
+                        <div class="mb-3">
+                            <label for="website" class="form-label fw-semibold">
+                                网站 / 应用 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-lg"
+                                   id="website" name="website"
+                                   placeholder="例如: Google, GitHub"
+                                   value="{{ website or entry.website if entry else '' }}"
+                                   required autofocus>
+                        </div>
+
+                        <!-- 用户名 -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label fw-semibold">
+                                用户名 / 邮箱 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control form-control-lg"
+                                   id="username" name="username"
+                                   placeholder="例如: example@gmail.com"
+                                   value="{{ username or entry.username if entry else '' }}"
+                                   required>
+                        </div>
+
+                        <!-- 密码 -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold">
+                                密码 <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control form-control-lg"
+                                       id="password" name="password"
+                                       placeholder="输入或生成密码"
+                                       value="{{ current_password if current_password is defined else '' }}"
+                                       required oninput="checkStrength()">
+                                <button class="btn btn-outline-secondary" type="button"
+                                        onclick="toggleVisibility('password', this)" title="显示/隐藏">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-success" type="button"
+                                        onclick="generatePassword()" title="生成随机密码">
+                                    <i class="bi bi-shuffle"></i>
+                                </button>
+                            </div>
+                            <div class="mt-1" id="strength-indicator">
+                                {% if current_password %}
+                                <small id="strengthText"></small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- 分类 -->
+                        <div class="mb-3">
+                            <label for="category" class="form-label fw-semibold">
+                                <i class="bi bi-folder2"></i> 分类
+                            </label>
+                            <select class="form-select" id="category" name="category">
+                                {% set sel_cat = category or (entry.category if entry else '其他') %}
+                                {% for cat in categories %}
+                                <option value="{{ cat }}" {% if sel_cat == cat %}selected{% endif %}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- 备注 -->
+                        <div class="mb-3">
+                            <label for="notes" class="form-label fw-semibold">备注</label>
+                            <input type="text" class="form-control"
+                                   id="notes" name="notes"
+                                   placeholder="可选备注信息"
+                                   value="{{ notes or entry.notes if entry else '' }}">
+                        </div>
+
+                        <!-- 历史记录（仅编辑模式） -->
+                        {% if entry %}
+                        <div class="mb-3">
+                            <details>
+                                <summary class="text-muted small cursor-pointer">
+                                    <i class="bi bi-clock-history"></i> 密码历史记录
+                                </summary>
+                                <div class="mt-2" id="historyContainer">
+                                    <span class="text-muted small">加载中...</span>
+                                </div>
+                            </details>
+                        </div>
+                        {% endif %}
+
+                        <!-- 按钮 -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg">取消</a>
+                            <button type="submit" class="btn btn-primary btn-lg px-4">
+                                <i class="bi bi-check-lg"></i> 保存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快捷提示 -->
+        <div class="col-md-4 col-lg-3 mt-4 mt-md-0">
+            <div class="card border-0 bg-light">
+                <div class="card-body">
+                    <h6><i class="bi bi-lightbulb"></i> 安全提示</h6>
+                    <ul class="small text-muted mb-0 ps-3">
+                        <li>使用<b>强密码</b>（含大小写+数字+符号）</li>
+                        <li>不同网站<b>不要复用</b>同一密码</li>
+                        <li>密码长度建议 <b>12 位以上</b></li>
+                        <li>点击 🎲 可一键生成强密码</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card border-0 bg-light mt-3">
+                <div class="card-body">
+                    <h6><i class="bi bi-folder2"></i> 分类说明</h6>
+                    <ul class="small text-muted mb-0 ps-3">
+                        <li><b>社交</b> — 微信、QQ、微博等</li>
+                        <li><b>邮箱</b> — Gmail、QQ邮箱等</li>
+                        <li><b>金融</b> — 支付宝、银行等</li>
+                        <li><b>购物</b> — 淘宝、京东等</li>
+                        <li><b>工作</b> — 公司系统、GitHub等</li>
+                        <li><b>学习</b> — 教务系统、网课等</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const STRENGTH_LABELS = {0:'非常弱',1:'弱',2:'一般',3:'强',4:'非常强',5:'极强'};
+const STRENGTH_COLORS = {0:'#dc3545',1:'#fd7e14',2:'#ffc107',3:'#20c997',4:'#198754',5:'#198754'};
+
+function toggleVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') { input.type = 'text'; icon.className = 'bi bi-eye-slash'; }
+    else { input.type = 'password'; icon.className = 'bi bi-eye'; }
+}
+
+function generatePassword() {
+    fetch('/api/generate-password').then(r => r.json()).then(data => {
+        document.getElementById('password').value = data.password;
+        document.getElementById('password').type = 'text';
+        document.querySelector('[onclick*="toggleVisibility"]').querySelector('i').className = 'bi bi-eye-slash';
+        checkStrength();
+    });
+}
+
+function checkStrength() {
+    const pwd = document.getElementById('password').value;
+    const div = document.getElementById('strength-indicator');
+    if (!pwd) { div.innerHTML = ''; return; }
+    fetch(`/api/check-strength?password=${encodeURIComponent(pwd)}`)
+        .then(r => r.json()).then(data => {
+            const bars = ['○○○○○','●○○○○','●●○○○','●●●○○','●●●●○','●●●●●'];
+            div.innerHTML = `<small style="color:${STRENGTH_COLORS[data.strength]};font-weight:500">${bars[data.strength]} ${data.strength_label}</small>`;
+        });
+}
+
+{% if current_password %}document.addEventListener('DOMContentLoaded', checkStrength);{% endif %}
+
+// 加载密码历史
+{% if entry %}
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('historyContainer');
+    fetch(`/api/entry/{{ entry.id }}/history`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.length === 0) {
+                container.innerHTML = '<span class="text-muted small">暂无历史记录</span>';
+                return;
+            }
+            let html = '<ul class="list-group list-group-flush small">';
+            data.forEach(h => {
+                html += `<li class="list-group-item d-flex justify-content-between py-1">
+                    <span>${h.password_masked}</span>
+                    <span class="text-muted">${h.changed_at}</span>
+                </li>`;
+            });
+            html += '</ul>';
+            container.innerHTML = html;
+        })
+        .catch(() => { container.innerHTML = '<span class="text-danger small">加载失败</span>'; });
+});
+{% endif %}
+</script>
+{% endblock %}
